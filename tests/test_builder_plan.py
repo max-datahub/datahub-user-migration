@@ -120,12 +120,28 @@ def test_build_plan_captures_all_owner_types_per_entity(monkeypatch):
     assert plan.meta.target_domain == "dst.tld"
 
 
-def test_build_plan_aborts_if_old_user_missing(monkeypatch):
+def test_build_plan_aborts_if_all_old_users_missing(monkeypatch):
+    # A single missing user means nothing resolves -> abort (nothing to migrate).
     _patch_collectors(monkeypatch, user_exists=False)
     cfg = RunConfig(gms_url="http://gms", token=None)
 
     with pytest.raises(ValueError):
         builder.build_plan(cfg, [OLD_TRIPLE], phase="migrate", options={})
+
+
+def test_build_plan_skips_missing_user_instead_of_aborting_batch(monkeypatch):
+    # One missing user must NOT poison the batch: the present user is still planned.
+    _patch_collectors(monkeypatch)
+    monkeypatch.setattr(
+        builder, "user_exists_via_api",
+        lambda gms_url, token, urn: urn == "urn:li:corpuser:a@src.tld",
+    )
+    cfg = RunConfig(gms_url="http://gms", token=None)
+    pairs = [OLD_TRIPLE, ("b@src.tld", "b@dst.tld", "urn:li:corpuser:b@src.tld")]
+
+    plan = builder.build_plan(cfg, pairs, phase="migrate", options={})
+
+    assert [u.old_email for u in plan.users] == ["a@src.tld"]
 
 
 def test_resolve_pairs_source_domain_threads_urn_and_skips_username_urns(monkeypatch):

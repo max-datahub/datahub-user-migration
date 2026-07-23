@@ -399,27 +399,35 @@ def build_plan(
 ) -> Plan:
     """
     I/O: fetch live references for each (old_email, new_email, old_urn) triple and
-    assemble a full Plan. Aborts before making any Change if any old user is missing
-    (fail fast, no partial plan).
+    assemble a full Plan. Old users that don't exist in DataHub are skipped with a
+    warning (one unresolvable user must not poison the whole batch); the build only
+    aborts if NO user resolves -- there'd be nothing to migrate.
     """
     if phase not in ("migrate", "cleanup"):
         raise ValueError(f"Unknown phase: {phase!r}")
     options = dict(options or {})
 
     urn_pairs = [(old, new, old_urn, _user_urn(new)) for old, new, old_urn in pairs]
-    missing = [
-        old_email
-        for old_email, _new_email, old_urn, _new_urn in urn_pairs
-        if not user_exists_via_api(cfg.gms_url, cfg.token, old_urn)
+    resolvable = [
+        t for t in urn_pairs if user_exists_via_api(cfg.gms_url, cfg.token, t[2])
     ]
+    missing = [t[0] for t in urn_pairs if t not in resolvable]
     if missing:
-        raise ValueError(f"Old users do not exist in DataHub, aborting: {missing}")
+        logger.warning(
+            "Skipping %d old user(s) not found in DataHub (they will NOT be migrated): %s",
+            len(missing),
+            missing,
+        )
+    if not resolvable:
+        raise ValueError(
+            f"No old users resolve in DataHub, nothing to migrate (missing: {missing})"
+        )
 
     dh_graph = get_graph(cfg)
     recreation_source_urns = recreation_sources(dh_graph) if phase == "migrate" else []
 
     users: list[UserMigration] = []
-    for old_email, new_email, old_urn, new_urn in urn_pairs:
+    for old_email, new_email, old_urn, new_urn in resolvable:
         refs = _collect_references(dh_graph, old_urn, phase, recreation_source_urns)
         changes = build_plan_from_references(refs, phase=phase, new_urn=new_urn, old_urn=old_urn)
         users.append(
