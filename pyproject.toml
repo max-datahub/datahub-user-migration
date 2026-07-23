@@ -5,13 +5,13 @@ description = "Plan/apply/verify CLI for migrating DataHub corpuser identities w
 readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python = ">=3.10"
-dependencies = ["acryl-datahub>=0.13", "typer>=0.9", "PyYAML>=6"]
+dependencies = ["acryl-datahub>=1.6.0", "typer>=0.15", "PyYAML>=6"]
 
 [project.scripts]
 datahub-user-migration = "dhusermig.cli:app"
 
 [project.optional-dependencies]
-dev = ["pytest>=7", "pytest-cov>=4", "ruff>=0.6", "acryl-datahub[testing-utils]"]
+dev = ["pytest>=9", "pytest-cov>=7", "ruff>=0.15", "acryl-datahub[testing-utils]>=1.6.0"]
 
 [tool.ruff.lint]
 # E401/E702: the test suite deliberately uses combined imports and

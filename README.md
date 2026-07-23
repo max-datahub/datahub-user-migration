@@ -25,7 +25,7 @@ running this tool against a production instance.
 pip install -e .
 ```
 
-This installs `acryl-datahub>=0.13` (the DataHub Python SDK), `typer` (CLI), and
+This installs `acryl-datahub>=1.6.0` (the DataHub Python SDK), `typer` (CLI), and
 `PyYAML` (backup file format), and exposes a `datahub-user-migration` console
 script (`dhusermig.cli:app`). The examples below also work as
 `python -m dhusermig.cli`.
