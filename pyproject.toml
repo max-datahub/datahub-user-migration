@@ -1,0 +1,27 @@
+[project]
+name = "datahub-user-migration"
+version = "1.0.0"
+description = "Plan/apply/verify CLI for migrating DataHub corpuser identities when login emails change domain"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.10"
+dependencies = ["acryl-datahub>=0.13", "typer>=0.9", "PyYAML>=6"]
+
+[project.scripts]
+datahub-user-migration = "dhusermig.cli:app"
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "pytest-cov>=4", "ruff>=0.6", "acryl-datahub[testing-utils]"]
+
+[tool.ruff.lint]
+# E401/E702: the test suite deliberately uses combined imports and
+# semicolon-joined statements for compactness (e.g. `p = ...; store.save_plan(...)`)
+# -- matching existing style rather than a sweeping reformat.
+ignore = ["E401", "E702"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

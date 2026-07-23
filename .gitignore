@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# SDD scratch (task briefs, reports, review packages, progress ledger)
+.superpowers/
+
+# Migration run artifacts (plans/backups/reports may contain env data)
+/runs/
+*.plan.json

@@ -1,0 +1,407 @@
+[
+{
+    "entityType": "dataset",
+    "entityUrn": "urn:li:dataset:(urn:li:dataPlatform:mysql,my_db.my_schema.multi_enum,PROD)",
+    "changeType": "UPSERT",
+    "aspectName": "ownership",
+    "aspect": {
+        "json": {
+            "owners": [
+                {
+                    "owner": "urn:li:corpuser:alice@example-target.tld",
+                    "type": "BUSINESS_OWNER"
+                },
+                {
+                    "owner": "urn:li:corpuser:alice@example-target.tld",
+                    "type": "TECHNICAL_OWNER"
+                }
+            ],
+            "ownerTypes": {
+                "urn:li:ownershipType:__system__business_owner": [
+                    "urn:li:corpuser:alice@example-target.tld"
+                ],
+                "urn:li:ownershipType:__system__technical_owner": [
+                    "urn:li:corpuser:alice@example-target.tld"
+                ]
+            },
+            "lastModified": {
+                "time": 0,
+                "actor": "urn:li:corpuser:unknown"
+            }
+        }
+    },
+    "systemMetadata": {
+        "lastObserved": 1784804477024,
+        "runId": "user-migration",
+        "lastRunId": "user-migration",
+        "properties": {
+            "isNoOp": "false",
+            "clientId": "acryl-datahub",
+            "clientVersion": "1.6.0.15",
+            "telemetryTraceId": "000657452cd8bae8ead24042c72a4a9b"
+        },
+        "version": "3",
+        "schemaVersion": 1,
+        "aspectCreated": {
+            "time": 1784804469178,
+            "actor": "urn:li:corpuser:datahub"
+        },
+        "aspectModified": {
+            "time": 1784804477026,
+            "actor": "urn:li:corpuser:datahub"
+        }
+    }
+},
+{
+    "entityType": "dataset",
+    "entityUrn": "urn:li:dataset:(urn:li:dataPlatform:mysql,my_db.my_schema.multi_enum,PROD)",
+    "changeType": "UPSERT",
+    "aspectName": "datasetKey",
+    "aspect": {
+        "json": {
+            "platform": "urn:li:dataPlatform:mysql",
+            "name": "my_db.my_schema.multi_enum",
+            "origin": "PROD"
+        }
+    }
+},
+{
+    "entityType": "dataset",
+    "entityUrn": "urn:li:dataset:(urn:li:dataPlatform:mysql,my_db.my_schema.multi_custom,PROD)",
+    "changeType": "UPSERT",
+    "aspectName": "ownership",
+    "aspect": {
+        "json": {
+            "owners": [
+                {
+                    "owner": "urn:li:corpuser:alice@example-target.tld",
+                    "type": "CUSTOM",
+                    "typeUrn": "urn:li:ownershipType:steward"
+                },
+                {
+                    "owner": "urn:li:corpuser:alice@example-target.tld",
+                    "type": "CUSTOM",
+                    "typeUrn": "urn:li:ownershipType:data_steward"
+                }
+            ],
+            "ownerTypes": {
+                "urn:li:ownershipType:steward": [
+                    "urn:li:corpuser:alice@example-target.tld"
+                ],
+                "urn:li:ownershipType:data_steward": [
+                    "urn:li:corpuser:alice@example-target.tld"
+                ]
+            },
+            "lastModified": {
+                "time": 0,
+                "actor": "urn:li:corpuser:unknown"
+            }
+        }
+    },
+    "systemMetadata": {
+        "lastObserved": 1784804476990,
+        "runId": "user-migration",
+        "lastRunId": "user-migration",
+        "properties": {
+            "isNoOp": "false",
+            "clientId": "acryl-datahub",
+            "clientVersion": "1.6.0.15",
+            "telemetryTraceId": "000657452cd83618240513231b777f83"
+        },
+        "version": "3",
+        "schemaVersion": 1,
+        "aspectCreated": {
+            "time": 1784804469204,
+            "actor": "urn:li:corpuser:datahub"
+        },
+        "aspectModified": {
+            "time": 1784804476993,
+            "actor": "urn:li:corpuser:datahub"
+        }
+    }
+},
+{
+    "entityType": "dataset",
+    "entityUrn": "urn:li:dataset:(urn:li:dataPlatform:mysql,my_db.my_schema.multi_custom,PROD)",
+    "changeType": "UPSERT",
+    "aspectName": "datasetKey",
+    "aspect": {
+        "json": {
+            "platform": "urn:li:dataPlatform:mysql",
+            "name": "my_db.my_schema.multi_custom",
+            "origin": "PROD"
+        }
+    }
+},
+{
+    "entityType": "dataset",
+    "entityUrn": "urn:li:dataset:(urn:li:dataPlatform:mysql,my_db.my_schema.other,PROD)",
+    "changeType": "UPSERT",
+    "aspectName": "ownership",
+    "aspect": {
+        "json": {
+            "owners": [
+                {
+                    "owner": "urn:li:corpuser:bob@example-source.tld",
+                    "type": "TECHNICAL_OWNER"
+                }
+            ],
+            "ownerTypes": {
+                "urn:li:ownershipType:__system__technical_owner": [
+                    "urn:li:corpuser:bob@example-source.tld"
+                ]
+            },
+            "lastModified": {
+                "time": 0,
+                "actor": "urn:li:corpuser:unknown"
+            }
+        }
+    },
+    "systemMetadata": {
+        "lastObserved": 1784804469223,
+        "runId": "no-run-id-provided",
+        "lastRunId": "no-run-id-provided",
+        "properties": {
+            "clientVersion": "1.6.0.15",
+            "telemetryTraceId": "000657452c61b628a578c1bf3c33a549",
+            "clientId": "acryl-datahub"
+        },
+        "version": "1",
+        "schemaVersion": 1,
+        "aspectCreated": {
+            "time": 1784804469226,
+            "actor": "urn:li:corpuser:datahub"
+        },
+        "aspectModified": {
+            "time": 1784804469226,
+            "actor": "urn:li:corpuser:datahub"
+        }
+    }
+},
+{
+    "entityType": "dataset",
+    "entityUrn": "urn:li:dataset:(urn:li:dataPlatform:mysql,my_db.my_schema.other,PROD)",
+    "changeType": "UPSERT",
+    "aspectName": "datasetKey",
+    "aspect": {
+        "json": {
+            "platform": "urn:li:dataPlatform:mysql",
+            "name": "my_db.my_schema.other",
+            "origin": "PROD"
+        }
+    }
+},
+{
+    "entityType": "dataHubPolicy",
+    "entityUrn": "urn:li:dataHubPolicy:e2e-alice-policy",
+    "changeType": "UPSERT",
+    "aspectName": "dataHubPolicyKey",
+    "aspect": {
+        "json": {
+            "id": "e2e-alice-policy"
+        }
+    }
+},
+{
+    "entityType": "dataHubPolicy",
+    "entityUrn": "urn:li:dataHubPolicy:e2e-alice-policy",
+    "changeType": "UPSERT",
+    "aspectName": "dataHubPolicyInfo",
+    "aspect": {
+        "json": {
+            "displayName": "e2e alice policy",
+            "description": "Policy naming alice as an actor (e2e seed)",
+            "type": "PLATFORM",
+            "state": "ACTIVE",
+            "privileges": [
+                "MANAGE_USERS"
+            ],
+            "actors": {
+                "users": [
+                    "urn:li:corpuser:alice@example-target.tld"
+                ],
+                "resourceOwners": false,
+                "allUsers": false,
+                "allGroups": false
+            },
+            "editable": true
+        }
+    },
+    "systemMetadata": {
+        "lastObserved": 1784804477049,
+        "runId": "user-migration",
+        "lastRunId": "user-migration",
+        "properties": {
+            "isNoOp": "false",
+            "clientId": "acryl-datahub",
+            "clientVersion": "1.6.0.15",
+            "telemetryTraceId": "000657452cd91c9004549a7665c29567"
+        },
+        "version": "3",
+        "schemaVersion": 1,
+        "aspectCreated": {
+            "time": 1784804469264,
+            "actor": "urn:li:corpuser:datahub"
+        },
+        "aspectModified": {
+            "time": 1784804477051,
+            "actor": "urn:li:corpuser:datahub"
+        }
+    }
+},
+{
+    "entityType": "corpuser",
+    "entityUrn": "urn:li:corpuser:alice@example-source.tld",
+    "changeType": "UPSERT",
+    "aspectName": "corpUserKey",
+    "aspect": {
+        "json": {
+            "username": "alice@example-source.tld"
+        }
+    }
+},
+{
+    "entityType": "corpuser",
+    "entityUrn": "urn:li:corpuser:alice@example-source.tld",
+    "changeType": "UPSERT",
+    "aspectName": "corpUserInfo",
+    "aspect": {
+        "json": {
+            "customProperties": {},
+            "active": true,
+            "displayName": "Alice",
+            "email": "alice@example-source.tld",
+            "system": false
+        }
+    },
+    "systemMetadata": {
+        "lastObserved": 1784804469027,
+        "runId": "no-run-id-provided",
+        "lastRunId": "no-run-id-provided",
+        "properties": {
+            "clientVersion": "1.6.0.15",
+            "telemetryTraceId": "000657452c5edbb00c341667a376d8a9",
+            "clientId": "acryl-datahub"
+        },
+        "version": "1",
+        "schemaVersion": 1,
+        "aspectCreated": {
+            "time": 1784804469042,
+            "actor": "urn:li:corpuser:datahub"
+        },
+        "aspectModified": {
+            "time": 1784804469042,
+            "actor": "urn:li:corpuser:datahub"
+        }
+    }
+},
+{
+    "entityType": "corpuser",
+    "entityUrn": "urn:li:corpuser:alice@example-source.tld",
+    "changeType": "UPSERT",
+    "aspectName": "status",
+    "aspect": {
+        "json": {
+            "removed": true
+        }
+    },
+    "systemMetadata": {
+        "lastObserved": 1784804475948,
+        "runId": "__datahub-graph-client",
+        "lastRunId": "no-run-id-provided",
+        "properties": {
+            "isNoOp": "false",
+            "clientId": "acryl-datahub",
+            "clientVersion": "1.6.0.15",
+            "telemetryTraceId": "000657452cc853b0a08693f8c71db4af"
+        },
+        "version": "2",
+        "schemaVersion": 1,
+        "aspectCreated": {
+            "time": 1784804469084,
+            "actor": "urn:li:corpuser:datahub"
+        },
+        "aspectModified": {
+            "time": 1784804475952,
+            "actor": "urn:li:corpuser:datahub"
+        }
+    }
+},
+{
+    "entityType": "corpuser",
+    "entityUrn": "urn:li:corpuser:alice@example-target.tld",
+    "changeType": "UPSERT",
+    "aspectName": "corpUserKey",
+    "aspect": {
+        "json": {
+            "username": "alice@example-target.tld"
+        }
+    }
+},
+{
+    "entityType": "corpuser",
+    "entityUrn": "urn:li:corpuser:alice@example-target.tld",
+    "changeType": "UPSERT",
+    "aspectName": "corpUserInfo",
+    "aspect": {
+        "json": {
+            "customProperties": {},
+            "active": true,
+            "displayName": "Alice",
+            "email": "alice@example-target.tld",
+            "system": false
+        }
+    },
+    "systemMetadata": {
+        "lastObserved": 1784804475652,
+        "runId": "user-migration",
+        "lastRunId": "no-run-id-provided",
+        "properties": {
+            "clientVersion": "1.6.0.15",
+            "telemetryTraceId": "000657452cc3cf701cd66e89c286e429",
+            "clientId": "acryl-datahub"
+        },
+        "version": "1",
+        "schemaVersion": 1,
+        "aspectCreated": {
+            "time": 1784804475655,
+            "actor": "urn:li:corpuser:datahub"
+        },
+        "aspectModified": {
+            "time": 1784804475655,
+            "actor": "urn:li:corpuser:datahub"
+        }
+    }
+},
+{
+    "entityType": "corpuser",
+    "entityUrn": "urn:li:corpuser:alice@example-target.tld",
+    "changeType": "UPSERT",
+    "aspectName": "status",
+    "aspect": {
+        "json": {
+            "removed": false
+        }
+    },
+    "systemMetadata": {
+        "lastObserved": 1784804475665,
+        "runId": "user-migration",
+        "lastRunId": "no-run-id-provided",
+        "properties": {
+            "clientVersion": "1.6.0.15",
+            "telemetryTraceId": "000657452cc40620795f79056c31c3a0",
+            "clientId": "acryl-datahub"
+        },
+        "version": "1",
+        "schemaVersion": 1,
+        "aspectCreated": {
+            "time": 1784804475669,
+            "actor": "urn:li:corpuser:datahub"
+        },
+        "aspectModified": {
+            "time": 1784804475669,
+            "actor": "urn:li:corpuser:datahub"
+        }
+    }
+}
+]

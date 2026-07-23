@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "tool_version": "1.0.0",
+    "created_at": "<normalized>",
+    "gms_url_fingerprint": "<normalized>",
+    "target_domain": "example-target.tld",
+    "phase": "migrate",
+    "options": {}
+  },
+  "users": [
+    {
+      "old_email": "alice@example-source.tld",
+      "old_urn": "urn:li:corpuser:alice@example-source.tld",
+      "new_email": "alice@example-target.tld",
+      "new_urn": "urn:li:corpuser:alice@example-target.tld",
+      "changes": [
+        {
+          "kind": "ADD_OWNERSHIP",
+          "target": "urn:li:dataset:(urn:li:dataPlatform:mysql,my_db.my_schema.multi_custom,PROD)",
+          "state": "PENDING",
+          "owner_types": [
+            [
+              "CUSTOM",
+              "urn:li:ownershipType:steward"
+            ],
+            [
+              "CUSTOM",
+              "urn:li:ownershipType:data_steward"
+            ]
+          ],
+          "source": null,
+          "entity": null,
+          "field": null,
+          "note": null,
+          "error": null
+        },
+        {
+          "kind": "ADD_OWNERSHIP",
+          "target": "urn:li:dataset:(urn:li:dataPlatform:mysql,my_db.my_schema.multi_enum,PROD)",
+          "state": "PENDING",
+          "owner_types": [
+            [
+              "BUSINESS_OWNER",
+              null
+            ],
+            [
+              "TECHNICAL_OWNER",
+              null
+            ]
+          ],
+          "source": null,
+          "entity": null,
+          "field": null,
+          "note": null,
+          "error": null
+        },
+        {
+          "kind": "CREATE_USER",
+          "target": "urn:li:corpuser:alice@example-target.tld",
+          "state": "PENDING",
+          "owner_types": [],
+          "source": null,
+          "entity": null,
+          "field": null,
+          "note": null,
+          "error": null
+        },
+        {
+          "kind": "DETECT_RECREATION_SOURCE",
+          "target": "urn:li:dataHubIngestionSource:e2e-recreation-source",
+          "state": "INFO",
+          "owner_types": [],
+          "source": null,
+          "entity": null,
+          "field": null,
+          "note": "ingestion source may recreate this user via usage extraction after migration/cleanup",
+          "error": null
+        },
+        {
+          "kind": "DETECT_TOKEN",
+          "target": "urn:li:dataHubAccessToken:e2e-alice-token",
+          "state": "INFO",
+          "owner_types": [],
+          "source": null,
+          "entity": null,
+          "field": null,
+          "note": "personal access token owned by urn:li:corpuser:alice@example-source.tld \u2014 cannot be recreated for urn:li:corpuser:alice@example-target.tld",
+          "error": null
+        },
+        {
+          "kind": "MIGRATE_VIEW",
+          "target": "urn:li:dataHubView:e2e-alice-view",
+          "state": "INFO",
+          "owner_types": [],
+          "source": null,
+          "entity": null,
+          "field": null,
+          "note": "personal view \u2014 detect-only; recreate under new user manually",
+          "error": null
+        },
+        {
+          "kind": "REWRITE_POLICY",
+          "target": "urn:li:dataHubPolicy:e2e-alice-policy",
+          "state": "PENDING",
+          "owner_types": [],
+          "source": null,
+          "entity": null,
+          "field": null,
+          "note": null,
+          "error": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "meta": {
+    "tool_version": "1.0.0",
+    "created_at": "<normalized>",
+    "gms_url_fingerprint": "<normalized>",
+    "target_domain": "example-target.tld",
+    "phase": "cleanup",
+    "options": {}
+  },
+  "users": [
+    {
+      "old_email": "alice@example-source.tld",
+      "old_urn": "urn:li:corpuser:alice@example-source.tld",
+      "new_email": "alice@example-target.tld",
+      "new_urn": "urn:li:corpuser:alice@example-target.tld",
+      "changes": [
+        {
+          "kind": "DELETE_USER",
+          "target": "urn:li:corpuser:alice@example-source.tld",
+          "state": "PENDING",
+          "owner_types": [],
+          "source": null,
+          "entity": null,
+          "field": null,
+          "note": null,
+          "error": null
+        },
+        {
+          "kind": "REINDEX_USER",
+          "target": "urn:li:corpuser:alice@example-source.tld",
+          "state": "PENDING",
+          "owner_types": [],
+          "source": null,
+          "entity": null,
+          "field": null,
+          "note": null,
+          "error": null
+        },
+        {
+          "kind": "REMOVE_OWNERSHIP",
+          "target": "urn:li:dataset:(urn:li:dataPlatform:mysql,my_db.my_schema.multi_custom,PROD)",
+          "state": "PENDING",
+          "owner_types": [],
+          "source": null,
+          "entity": null,
+          "field": null,
+          "note": null,
+          "error": null
+        },
+        {
+          "kind": "REMOVE_OWNERSHIP",
+          "target": "urn:li:dataset:(urn:li:dataPlatform:mysql,my_db.my_schema.multi_enum,PROD)",
+          "state": "PENDING",
+          "owner_types": [],
+          "source": null,
+          "entity": null,
+          "field": null,
+          "note": null,
+          "error": null
+        },
+        {
+          "kind": "REMOVE_POLICY_ACTOR",
+          "target": "urn:li:dataHubPolicy:e2e-alice-policy",
+          "state": "PENDING",
+          "owner_types": [],
+          "source": null,
+          "entity": null,
+          "field": null,
+          "note": null,
+          "error": null
+        }
+      ]
+    }
+  ]
+}

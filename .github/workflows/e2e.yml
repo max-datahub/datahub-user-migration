@@ -1,0 +1,71 @@
+# Brings up only the DataHub OSS BACKEND (GMS + system-update + mysql +
+# opensearch + kafka) from DataHub's pinned quickstart compose, dropping the
+# frontend and actions services. This is an API-only tool, so no UI/actions are
+# needed. Auth is disabled in this compose, so the e2e needs no token.
+#
+# The standard GitHub runner is disk-constrained: DataHub's images fill the disk
+# and trip OpenSearch's flood-stage watermark, which blocks index creation and
+# fails system-update's BuildIndicesStep (403 index_create_block_exception). We
+# reclaim disk up front AND disable OpenSearch's disk-based index block.
+name: e2e
+on:
+  pull_request:
+    paths: ["src/**", "tests/**", "pyproject.toml", ".github/workflows/e2e.yml"]
+  workflow_dispatch: {}
+  # schedule:            # uncomment for optional nightly runs
+  #   - cron: "0 6 * * *"
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Pin to the DataHub version line the golden files in tests/e2e/golden
+      # were generated against. Use a clean 3-part release tag (vX.Y.Z): rc /
+      # 4-part tags require interactive confirmation and fail non-interactively.
+      # If you regenerate goldens against a different release, update this tag.
+      DATAHUB_VERSION: v1.6.0
+    steps:
+      - uses: actions/checkout@v4
+      - name: Free up runner disk
+        run: |
+          # Reclaim ~25GB from preinstalled toolchains so DataHub's images don't
+          # fill the disk and trip OpenSearch's flood-stage watermark.
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost "${AGENT_TOOLSDIRECTORY:-}" || true
+          docker image prune -af || true
+          df -h /
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install the tool + deps
+        run: pip install -e ".[dev]"
+      - name: Start DataHub OSS backend (GMS + deps; no frontend/actions)
+        env:
+          UI_INGESTION_DEFAULT_CLI_VERSION: "1.6.0"
+        run: |
+          # Fetch DataHub's own pinned quickstart compose and bring up ONLY the
+          # GMS service. Compose pulls in its dependency chain (system-update →
+          # mysql/opensearch/kafka); frontend + actions are never started because
+          # nothing we start depends on them. --wait blocks until system-update
+          # completes and GMS is healthy.
+          curl -fsSL "https://raw.githubusercontent.com/datahub-project/datahub/${DATAHUB_VERSION}/docker/quickstart/docker-compose.quickstart-profile.yml" -o /tmp/qs.yml
+          # Disable OpenSearch's disk-based index-create block (CI disks are small
+          # and trip the flood-stage watermark, failing system-update with a 403).
+          printf 'services:\n  opensearch:\n    environment:\n      cluster.routing.allocation.disk.threshold_enabled: "false"\n' > /tmp/os-override.yml
+          export DATAHUB_TOKEN_SERVICE_SIGNING_KEY="$(openssl rand -base64 32)"
+          export DATAHUB_TOKEN_SERVICE_SALT="$(openssl rand -base64 32)"
+          docker compose -f /tmp/qs.yml -f /tmp/os-override.yml up -d --wait --wait-timeout 900 datahub-gms-quickstart
+      - name: Run e2e
+        env:
+          # Setting this is what activates tests/e2e; the suite skips when unset.
+          # Auth is disabled in this compose, so no token is required.
+          DATAHUB_GMS_URL: http://localhost:8080
+        run: pytest tests/e2e -v
+      - name: DataHub diagnostics on failure
+        if: failure()
+        run: |
+          df -h / || true
+          free -h || true
+          docker compose -f /tmp/qs.yml ps -a || docker ps -a
+          docker compose -f /tmp/qs.yml logs --no-color --tail=100 system-update-quickstart opensearch datahub-gms-quickstart || true
