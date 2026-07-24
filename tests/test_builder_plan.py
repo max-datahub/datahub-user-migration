@@ -105,11 +105,14 @@ def _patch_collectors(monkeypatch, *, user_exists=True):
     monkeypatch.setattr(views_mod, "homepage_findings_for_user", lambda graph, urn: [])
 
 
+OLD_TRIPLE = ("a@src.tld", "a@dst.tld", "urn:li:corpuser:a@src.tld")
+
+
 def test_build_plan_captures_all_owner_types_per_entity(monkeypatch):
     _patch_collectors(monkeypatch)
     cfg = RunConfig(gms_url="http://gms", token=None)
 
-    plan = builder.build_plan(cfg, [("a@src.tld", "a@dst.tld")], phase="migrate", options={})
+    plan = builder.build_plan(cfg, [OLD_TRIPLE], phase="migrate", options={})
 
     add = next(c for c in plan.users[0].changes if c.kind == ChangeKind.ADD_OWNERSHIP)
     assert add.owner_types == [["BUSINESS_OWNER", None], ["TECHNICAL_OWNER", None]]
@@ -117,12 +120,48 @@ def test_build_plan_captures_all_owner_types_per_entity(monkeypatch):
     assert plan.meta.target_domain == "dst.tld"
 
 
-def test_build_plan_aborts_if_old_user_missing(monkeypatch):
+def test_build_plan_aborts_if_all_old_users_missing(monkeypatch):
+    # A single missing user means nothing resolves -> abort (nothing to migrate).
     _patch_collectors(monkeypatch, user_exists=False)
     cfg = RunConfig(gms_url="http://gms", token=None)
 
     with pytest.raises(ValueError):
-        builder.build_plan(cfg, [("a@src.tld", "a@dst.tld")], phase="migrate", options={})
+        builder.build_plan(cfg, [OLD_TRIPLE], phase="migrate", options={})
+
+
+def test_build_plan_skips_missing_user_instead_of_aborting_batch(monkeypatch):
+    # One missing user must NOT poison the batch: the present user is still planned.
+    _patch_collectors(monkeypatch)
+    monkeypatch.setattr(
+        builder, "user_exists_via_api",
+        lambda gms_url, token, urn: urn == "urn:li:corpuser:a@src.tld",
+    )
+    cfg = RunConfig(gms_url="http://gms", token=None)
+    pairs = [OLD_TRIPLE, ("b@src.tld", "b@dst.tld", "urn:li:corpuser:b@src.tld")]
+
+    plan = builder.build_plan(cfg, pairs, phase="migrate", options={})
+
+    assert [u.old_email for u in plan.users] == ["a@src.tld"]
+
+
+def test_resolve_pairs_source_domain_threads_urn_and_skips_username_urns(monkeypatch):
+    discovered = [
+        {"urn": "urn:li:corpuser:alice@src.tld", "email": "alice@src.tld"},  # email URN -> migrate
+        {"urn": "urn:li:corpuser:Bob@Src.tld", "email": "bob@src.tld"},      # non-normalized email URN -> thread real URN
+        {"urn": "urn:li:corpuser:svc.account", "email": "svc.account@src.tld"},  # username URN -> skip
+    ]
+    monkeypatch.setattr(
+        builder, "discover_users",
+        lambda gms_url, token, domain_filter=None: discovered,
+    )
+    cfg = RunConfig(gms_url="http://gms", token=None)
+
+    triples = builder.resolve_pairs(cfg, source_domain="src.tld", target_domain="dst.tld")
+
+    assert triples == [
+        ("alice@src.tld", "alice@dst.tld", "urn:li:corpuser:alice@src.tld"),
+        ("bob@src.tld", "bob@dst.tld", "urn:li:corpuser:Bob@Src.tld"),  # real URN threaded, not reconstructed
+    ]
 
 
 class CustomTypesGraph:
@@ -144,7 +183,7 @@ def test_build_plan_preserves_distinct_custom_typeurns(monkeypatch):
     monkeypatch.setattr(builder, "get_graph", lambda cfg: CustomTypesGraph())
     cfg = RunConfig(gms_url="http://gms", token=None)
 
-    plan = builder.build_plan(cfg, [("a@src.tld", "a@dst.tld")], phase="migrate", options={})
+    plan = builder.build_plan(cfg, [OLD_TRIPLE], phase="migrate", options={})
 
     add = next(c for c in plan.users[0].changes if c.kind == ChangeKind.ADD_OWNERSHIP)
     # Discriminating: type-only dedup would produce a single ["CUSTOM", ...] pair here.
@@ -187,4 +226,4 @@ def test_build_plan_aborts_on_persistent_get_ownership_error(monkeypatch):
     cfg = RunConfig(gms_url="http://gms", token=None)
 
     with pytest.raises(builder.DiscoveryError, match=FlakyOwnershipGraph.BAD_URN):
-        builder.build_plan(cfg, [("a@src.tld", "a@dst.tld")], phase="migrate", options={})
+        builder.build_plan(cfg, [OLD_TRIPLE], phase="migrate", options={})

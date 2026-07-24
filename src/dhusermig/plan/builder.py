@@ -119,6 +119,19 @@ def _source_domain_filter(domain: str) -> str:
     return f"@{d}" if d else ""
 
 
+def _urn_is_email_based(urn: str) -> bool:
+    """
+    True if a corpuser URN is email-derived (id contains '@', e.g.
+    urn:li:corpuser:alice@corp.com) and therefore subject to the email-rename
+    problem this tool exists to fix. A stable username URN
+    (urn:li:corpuser:alice) is domain-independent -- a domain rename never mints
+    a new URN for it -- so it needs no migration and must not be turned into a
+    phantom email-based target.
+    """
+    prefix = f"urn:li:{CORPUSER_ENTITY}:"
+    return urn.startswith(prefix) and "@" in urn[len(prefix):]
+
+
 def validate_pairs(pairs: list[tuple[str, str]]) -> None:
     if not pairs:
         raise ValueError("No (old_email, new_email) pairs to migrate")
@@ -141,27 +154,34 @@ def resolve_pairs(
     user: Optional[str] = None,
     target_domain: Optional[str] = None,
     source_domain: Optional[str] = None,
-) -> list[tuple[str, str]]:
+) -> list[tuple[str, str, str]]:
     """
-    Build (old_email, new_email) pairs from one of:
+    Build (old_email, new_email, old_urn) triples from one of:
 
     - mapping_file: CSV with columns old_email, new_email.
     - user + target_domain: single user firstname.lastname@domain1.com -> firstname.lastname@target_domain.
     - source_domain + target_domain: discover all users whose email ends with @source_domain,
       map each to same local part @ target_domain (uses cfg.gms_url and cfg.token).
 
-    Returns list of (old_email, new_email). Raises ValueError if the combination of args is invalid,
-    or if the resolved pairs fail validate_pairs.
+    old_urn is the corpuser URN to re-point FROM. For user/mapping-file modes it is
+    derived from old_email (the operator asserts URN==email). For source_domain mode
+    it is the *discovered* URN -- so a URN that differs from urn:li:corpuser:<email>
+    (e.g. a mixed-case email URN) is still resolved correctly rather than reconstructed
+    into a non-existent one. Discovered users whose URN is not email-derived (a stable
+    username URN, unaffected by a domain rename) are skipped with a warning.
+
+    Returns list of (old_email, new_email, old_urn). Raises ValueError if the combination
+    of args is invalid, or if the resolved pairs fail validate_pairs.
     """
     if mapping_file is not None:
-        pairs = load_mapping(mapping_file)
+        pairs = [(old, new, _user_urn(old)) for old, new in load_mapping(mapping_file)]
     elif user and target_domain:
         old = user.strip()
         if "@" not in old:
             raise ValueError("user must be a full email (e.g. firstname.lastname@domain1.com)")
         local = old.split("@", 1)[0]
         new = f"{local}@{_normalize_target_domain(target_domain)}"
-        pairs = [(old, new)]
+        pairs = [(old, new, _user_urn(old))]
     elif source_domain and target_domain:
         domain_filter = _source_domain_filter(source_domain)
         discovered = discover_users(gms_url=cfg.gms_url, token=cfg.token, domain_filter=domain_filter)
@@ -169,19 +189,28 @@ def resolve_pairs(
         pairs = []
         for u in discovered:
             email = (u.get("email") or "").strip()
+            urn = (u.get("urn") or "").strip()
             if not email or "@" not in email:
+                continue
+            if not _urn_is_email_based(urn):
+                logger.warning(
+                    "Skipping %s (email %s): URN is not email-derived, so a domain "
+                    "rename does not affect it and it needs no migration.",
+                    urn or "(no urn)",
+                    email,
+                )
                 continue
             local = email.split("@", 1)[0]
             new_email = f"{local}@{target}"
-            pairs.append((email, new_email))
+            pairs.append((email, new_email, urn))  # thread the discovered URN, don't reconstruct
         if not pairs:
-            logger.warning("No users found with email ending in %s", domain_filter or "(any)")
+            logger.warning("No migratable (email-URN) users found under %s", domain_filter or "(any)")
     else:
         raise ValueError(
             "Provide mapping_file, or (--user EMAIL --target-domain DOMAIN), "
             "or (--source-domain DOMAIN --target-domain DOMAIN)"
         )
-    validate_pairs(pairs)
+    validate_pairs([(old, new) for old, new, _old_urn in pairs])
     return pairs
 
 
@@ -364,33 +393,41 @@ def _collect_references(
 
 def build_plan(
     cfg: RunConfig,
-    pairs: list[tuple[str, str]],
+    pairs: list[tuple[str, str, str]],
     phase: str,
     options: Optional[dict] = None,
 ) -> Plan:
     """
-    I/O: fetch live references for each (old_email, new_email) pair and assemble
-    a full Plan. Aborts before making any Change if any old user is missing
-    (fail fast, no partial plan).
+    I/O: fetch live references for each (old_email, new_email, old_urn) triple and
+    assemble a full Plan. Old users that don't exist in DataHub are skipped with a
+    warning (one unresolvable user must not poison the whole batch); the build only
+    aborts if NO user resolves -- there'd be nothing to migrate.
     """
     if phase not in ("migrate", "cleanup"):
         raise ValueError(f"Unknown phase: {phase!r}")
     options = dict(options or {})
 
-    urn_pairs = [(old, new, _user_urn(old), _user_urn(new)) for old, new in pairs]
-    missing = [
-        old_email
-        for old_email, _new_email, old_urn, _new_urn in urn_pairs
-        if not user_exists_via_api(cfg.gms_url, cfg.token, old_urn)
+    urn_pairs = [(old, new, old_urn, _user_urn(new)) for old, new, old_urn in pairs]
+    resolvable = [
+        t for t in urn_pairs if user_exists_via_api(cfg.gms_url, cfg.token, t[2])
     ]
+    missing = [t[0] for t in urn_pairs if t not in resolvable]
     if missing:
-        raise ValueError(f"Old users do not exist in DataHub, aborting: {missing}")
+        logger.warning(
+            "Skipping %d old user(s) not found in DataHub (they will NOT be migrated): %s",
+            len(missing),
+            missing,
+        )
+    if not resolvable:
+        raise ValueError(
+            f"No old users resolve in DataHub, nothing to migrate (missing: {missing})"
+        )
 
     dh_graph = get_graph(cfg)
     recreation_source_urns = recreation_sources(dh_graph) if phase == "migrate" else []
 
     users: list[UserMigration] = []
-    for old_email, new_email, old_urn, new_urn in urn_pairs:
+    for old_email, new_email, old_urn, new_urn in resolvable:
         refs = _collect_references(dh_graph, old_urn, phase, recreation_source_urns)
         changes = build_plan_from_references(refs, phase=phase, new_urn=new_urn, old_urn=old_urn)
         users.append(
