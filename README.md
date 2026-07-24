@@ -60,24 +60,33 @@ datahub-user-migration plan \
 #    out/migrate/summary.txt (human-readable counts + a "Manual follow-ups"
 #    section for anything the tool only detects, e.g. tokens/views/homepage)
 
-# 3. Apply it (prompts for confirmation unless --yes; backs up every entity
-#    before its first mutation)
+# 3. Dry-run the apply first (recommended): a fully read-only preview that logs
+#    every change it WOULD make -- no writes to DataHub, no backup files, and
+#    plan.json is left untouched. Confirm the intended changes look right.
+datahub-user-migration apply --plan out/migrate/plan.json --dry-run
+
+# 4. Apply it for real (prompts for confirmation unless --yes; backs up every
+#    entity before its first mutation)
 datahub-user-migration apply --plan out/migrate/plan.json
 
-# 4. Verify: confirms the new user now owns everything the migrate plan added
+# 5. Verify: confirms the new user now owns everything the migrate plan added
 #    (verify is phase-aware -- see docs/RUNBOOK.md for what it checks per phase)
 datahub-user-migration verify --plan out/migrate/plan.json
 
-# 5. Once the new user is confirmed working, build the cleanup plan
+# 6. Once the new user is confirmed working, build the cleanup plan
 datahub-user-migration plan \
   --user a@example-source.tld --target-domain example-target.tld \
   --phase cleanup --out out/cleanup
 
-# 6. Apply cleanup (removes old ownership/subscriptions/policy actors, then
+# 7. Dry-run the cleanup apply first (recommended -- especially here, since
+#    cleanup is destructive): read-only preview, no writes.
+datahub-user-migration apply --plan out/cleanup/plan.json --dry-run
+
+# 8. Apply cleanup (removes old ownership/subscriptions/policy actors, then
 #    deletes the old user and reindexes it)
 datahub-user-migration apply --plan out/cleanup/plan.json
 
-# 7. Verify: this should now report PASS for every user
+# 9. Verify: this should now report PASS for every user
 datahub-user-migration verify --plan out/cleanup/plan.json
 ```
 
@@ -87,7 +96,9 @@ Instead of `--user`/`--target-domain` for a single account, `plan` also accepts:
   arbitrary list of pairs.
 - `--source-domain example-source.tld --target-domain example-target.tld` —
   discover every user under the source domain and migrate all of them, keeping
-  the same local part.
+  the same local part. Users whose URN is not email-derived (a stable username
+  URN such as `urn:li:corpuser:alice`, which a domain rename does not affect) are
+  skipped with a warning.
 
 ## Command reference
 
@@ -101,7 +112,9 @@ DataHub. Discovery is fail-fast: if any discovery step fails (the ownership
 relationship walk and its search fallback both failing, or subscription, policy,
 token, view, homepage, or ingestion-source listing failing), plan building aborts
 with a `DiscoveryError` rather than silently producing a partial plan. Fix the
-connectivity or permission issue and re-run `plan`.
+connectivity or permission issue and re-run `plan`. Old users that do not exist
+in DataHub are skipped with a warning; planning aborts only if none of the
+requested users resolve.
 
 | Flag | Meaning |
 | --- | --- |
@@ -109,7 +122,7 @@ connectivity or permission issue and re-run `plan`.
 | `--mapping-file PATH` | CSV with `old_email,new_email` columns |
 | `--user EMAIL` | Single user, paired with `--target-domain` |
 | `--target-domain DOMAIN` | New domain for `--user` or `--source-domain` |
-| `--source-domain DOMAIN` | Discover + migrate every user under this domain |
+| `--source-domain DOMAIN` | Discover + migrate every user under this domain (skips non-email-derived URNs) |
 | `--phase migrate\|cleanup` | Default `migrate` |
 | `--hard` | Cleanup phase only: hard-delete instead of soft-delete |
 | `--gms-url`, `--token` | Override env vars |
@@ -236,11 +249,11 @@ These are listed in the plan and in the "Manual follow-ups" section of
 
 ## Testing
 
-- **Unit suite** — 88 tests covering plan building, mapping resolution, and the
-  plan store; ownership, policy, and view transforms; subscription
-  deduplication; resume semantics; the dry-run and backup guarantees; and
-  discovery-failure paths. Measured line coverage for the unit suite (excluding
-  the end-to-end tests) is 65%:
+- **Unit suite** — 90 tests covering plan building, mapping and source-domain
+  URN resolution, and the plan store; ownership, policy, and view transforms;
+  subscription deduplication; resume semantics; the dry-run and backup
+  guarantees; and discovery-failure paths. Measured line coverage for the unit
+  suite (excluding the end-to-end tests) is 67%:
 
   ```bash
   pip install -e ".[dev]"
